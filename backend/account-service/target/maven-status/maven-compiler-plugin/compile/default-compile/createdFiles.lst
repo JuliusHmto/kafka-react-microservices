@@ -1,0 +1,6 @@
+com\banking\account\domain\entity\AccountType.class
+com\banking\account\domain\entity\AccountStatus.class
+com\banking\account\domain\entity\Account.class
+com\banking\account\domain\valueobject\AccountNumber.class
+com\banking\account\AccountServiceApplication.class
+com\banking\account\domain\valueobject\Money.class
