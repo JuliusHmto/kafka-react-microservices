@@ -1,5 +1,5 @@
 -- Banking System Database Initialization
--- This script creates the necessary tables for the banking system
+-- This script creates the database structure and ensures proper user authentication
 
 -- Enable UUID extension for primary keys
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -20,8 +20,8 @@ CREATE TABLE users (
 );
 
 -- Account types enum
-CREATE TYPE account_type AS ENUM ('CHECKING', 'SAVINGS', 'CREDIT', 'LOAN');
-CREATE TYPE account_status AS ENUM ('ACTIVE', 'SUSPENDED', 'CLOSED', 'PENDING');
+CREATE TYPE account_type AS ENUM ('CHECKING', 'SAVINGS', 'BUSINESS', 'JOINT', 'STUDENT', 'PREMIUM');
+CREATE TYPE account_status AS ENUM ('PENDING', 'ACTIVE', 'SUSPENDED', 'CLOSED', 'FROZEN');
 
 -- Accounts table
 CREATE TABLE accounts (
@@ -33,6 +33,7 @@ CREATE TABLE accounts (
     balance DECIMAL(15,2) DEFAULT 0.00,
     available_balance DECIMAL(15,2) DEFAULT 0.00,
     currency VARCHAR(3) DEFAULT 'USD',
+    available_currency VARCHAR(3) DEFAULT 'USD',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     closed_at TIMESTAMP,
@@ -163,9 +164,4 @@ INSERT INTO accounts (account_number, user_id, account_type, status, balance, av
 ('CHK001000001', (SELECT id FROM users WHERE username = 'john.doe'), 'CHECKING', 'ACTIVE', 5000.00, 5000.00),
 ('SAV001000001', (SELECT id FROM users WHERE username = 'john.doe'), 'SAVINGS', 'ACTIVE', 15000.00, 15000.00),
 ('CHK001000002', (SELECT id FROM users WHERE username = 'jane.smith'), 'CHECKING', 'ACTIVE', 3000.00, 3000.00),
-('SAV001000002', (SELECT id FROM users WHERE username = 'jane.smith'), 'SAVINGS', 'ACTIVE', 8000.00, 8000.00);
-
--- Grant permissions to the banking user
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO banking_user;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO banking_user;
-GRANT USAGE ON SCHEMA public TO banking_user; 
+('SAV001000002', (SELECT id FROM users WHERE username = 'jane.smith'), 'SAVINGS', 'ACTIVE', 8000.00, 8000.00); 
