@@ -62,7 +62,7 @@ print_status "Starting monitoring services..."
 docker-compose up -d kafka-ui prometheus grafana
 
 print_status "Building and starting application services..."
-docker-compose up -d --build account-service
+docker-compose up -d --build account-service transaction-service
 
 print_status "Starting remaining services..."
 docker-compose up -d kafka-connect
@@ -73,6 +73,8 @@ echo ""
 echo "📊 Service URLs:"
 echo "  - Account Service: http://localhost:8080"
 echo "  - Account Service Health: http://localhost:8080/actuator/health"
+echo "  - Transaction Service: http://localhost:8081"
+echo "  - Transaction Service Health: http://localhost:8081/actuator/health"
 echo "  - Kafka UI: http://localhost:8090"
 echo "  - Grafana: http://localhost:3000 (admin/admin)"
 echo "  - Prometheus: http://localhost:9090"
@@ -82,7 +84,7 @@ print_status "Checking service health..."
 sleep 30
 
 # Check health of key services
-services=("postgres" "kafka" "account-service")
+services=("postgres" "kafka" "account-service" "transaction-service")
 for service in "${services[@]}"; do
     if docker-compose ps | grep -q "$service.*Up.*healthy\|$service.*Up"; then
         print_success "$service is running"
@@ -94,8 +96,9 @@ done
 print_status "To view logs for all services:"
 echo "  docker-compose logs -f"
 echo ""
-print_status "To view logs for a specific service:"
+print_status "To view logs for specific services:"
 echo "  docker-compose logs -f account-service"
+echo "  docker-compose logs -f transaction-service"
 echo ""
 print_status "To stop all services:"
 echo "  docker-compose down" 

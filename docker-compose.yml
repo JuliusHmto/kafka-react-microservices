@@ -166,6 +166,35 @@ services:
     networks:
       - banking-network
 
+  # Transaction Service
+  transaction-service:
+    build:
+      context: ./backend/transaction-service
+      dockerfile: Dockerfile
+    container_name: banking-transaction-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    ports:
+      - "8081:8081"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 29092
+      SPRING_PROFILES_ACTIVE: docker
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "java.*app.jar"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - banking-network
+
 volumes:
   postgres_data:
   grafana_data:

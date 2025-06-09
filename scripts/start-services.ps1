@@ -88,10 +88,10 @@ docker-compose up -d kafka-ui prometheus grafana
 
 if ($Build) {
     Write-Status "Building and starting application services..."
-    docker-compose up -d --build account-service
+    docker-compose up -d --build account-service transaction-service
 } else {
     Write-Status "Starting application services..."
-    docker-compose up -d account-service
+    docker-compose up -d account-service transaction-service
 }
 
 Write-Status "Starting remaining services..."
@@ -103,6 +103,8 @@ Write-Host ""
 Write-Host "Service URLs:" -ForegroundColor Magenta
 Write-Host "  - Account Service: http://localhost:8080"
 Write-Host "  - Account Service Health: http://localhost:8080/actuator/health"
+Write-Host "  - Transaction Service: http://localhost:8081"
+Write-Host "  - Transaction Service Health: http://localhost:8081/actuator/health"
 Write-Host "  - Kafka UI: http://localhost:8090"
 Write-Host "  - Grafana: http://localhost:3000 (admin/admin)"
 Write-Host "  - Prometheus: http://localhost:9090"
@@ -112,7 +114,7 @@ Write-Status "Checking service health..."
 Start-Sleep -Seconds 30
 
 # Check health of key services
-$services = @("postgres", "kafka", "account-service")
+$services = @("postgres", "kafka", "account-service", "transaction-service")
 foreach ($service in $services) {
     $status = docker-compose ps $service
     if ($status -match "Up.*healthy|Up") {
@@ -126,6 +128,7 @@ Write-Host ""
 Write-Status "Useful commands:"
 Write-Host "  View all logs: docker-compose logs -f"
 Write-Host "  View service logs: docker-compose logs -f account-service"
+Write-Host "                   docker-compose logs -f transaction-service"
 Write-Host "  Stop all services: docker-compose down"
 Write-Host "  Restart with clean: .\scripts\start-services.ps1 -Clean"
 Write-Host "  Restart with rebuild: .\scripts\start-services.ps1 -Build" 
