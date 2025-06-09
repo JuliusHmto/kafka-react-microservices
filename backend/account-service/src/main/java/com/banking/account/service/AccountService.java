@@ -1,11 +1,13 @@
 package com.banking.account.service;
 
+import com.banking.account.client.TransactionServiceClient;
 import com.banking.account.domain.entity.Account;
 import com.banking.account.domain.entity.AccountType;
 import com.banking.account.domain.valueobject.AccountNumber;
 import com.banking.account.domain.valueobject.Money;
 import com.banking.account.dto.AccountResponse;
 import com.banking.account.dto.CreateAccountRequest;
+import com.banking.account.dto.CreateTransactionRequest;
 import com.banking.account.dto.MoneyTransactionRequest;
 import com.banking.account.repository.AccountRepository;
 import com.banking.account.event.AccountCreatedEvent;
@@ -27,11 +29,14 @@ public class AccountService {
     
     private final AccountRepository accountRepository;
     private final EventPublisherService eventPublisher;
+    private final TransactionServiceClient transactionServiceClient;
     
     @Autowired
-    public AccountService(AccountRepository accountRepository, EventPublisherService eventPublisher) {
+    public AccountService(AccountRepository accountRepository, EventPublisherService eventPublisher, 
+                         TransactionServiceClient transactionServiceClient) {
         this.accountRepository = accountRepository;
         this.eventPublisher = eventPublisher;
+        this.transactionServiceClient = transactionServiceClient;
     }
     
     /**
@@ -109,6 +114,18 @@ public class AccountService {
         
         Account savedAccount = accountRepository.save(account);
         
+        // Create transaction record
+        CreateTransactionRequest transactionRequest = new CreateTransactionRequest(
+                "DEPOSIT",
+                request.getAmount(),
+                request.getCurrency(),
+                savedAccount.getId(),
+                null,
+                request.getDescription() != null ? request.getDescription() : "Deposit to account " + savedAccount.getAccountNumber().getValue(),
+                null
+        );
+        transactionServiceClient.createTransaction(transactionRequest);
+        
         // Publish money deposited event
         MoneyTransactionEvent event = new MoneyTransactionEvent(
                 savedAccount.getId(),
@@ -136,6 +153,18 @@ public class AccountService {
         account.debit(amount);
         
         Account savedAccount = accountRepository.save(account);
+        
+        // Create transaction record
+        CreateTransactionRequest transactionRequest = new CreateTransactionRequest(
+                "WITHDRAWAL",
+                request.getAmount(),
+                request.getCurrency(),
+                savedAccount.getId(),
+                null,
+                request.getDescription() != null ? request.getDescription() : "Withdrawal from account " + savedAccount.getAccountNumber().getValue(),
+                null
+        );
+        transactionServiceClient.createTransaction(transactionRequest);
         
         // Publish money withdrawn event
         MoneyTransactionEvent event = new MoneyTransactionEvent(

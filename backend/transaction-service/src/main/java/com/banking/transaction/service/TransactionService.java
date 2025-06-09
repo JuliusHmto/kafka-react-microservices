@@ -1,10 +1,12 @@
 package com.banking.transaction.service;
 
+import com.banking.transaction.client.AccountServiceClient;
 import com.banking.transaction.domain.entity.Transaction;
 import com.banking.transaction.domain.entity.TransactionStatus;
 import com.banking.transaction.domain.entity.TransactionType;
 import com.banking.transaction.domain.valueobject.Money;
 import com.banking.transaction.domain.valueobject.TransactionReference;
+import com.banking.transaction.dto.AccountDto;
 import com.banking.transaction.dto.CreateTransactionRequest;
 import com.banking.transaction.dto.TransactionDto;
 import com.banking.transaction.repository.TransactionRepository;
@@ -32,6 +34,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final EventPublisherService eventPublisherService;
+    private final AccountServiceClient accountServiceClient;
 
     /**
      * Creates a new transaction.
@@ -210,6 +213,34 @@ public class TransactionService {
         return transactions.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Retrieves transactions for a user across all their accounts.
+     */
+    @Transactional(readOnly = true)
+    public Page<TransactionDto> getUserTransactions(UUID userId, Pageable pageable) {
+        log.info("Getting transactions for user: {}", userId);
+        
+        // Get all accounts for the user
+        List<AccountDto> userAccounts = accountServiceClient.getUserAccounts(userId);
+        
+        if (userAccounts.isEmpty()) {
+            log.info("No accounts found for user: {}", userId);
+            return Page.empty(pageable);
+        }
+        
+        // Extract account IDs
+        List<UUID> accountIds = userAccounts.stream()
+                .map(AccountDto::getId)
+                .collect(Collectors.toList());
+        
+        log.info("Found {} accounts for user {}, getting transactions", accountIds.size(), userId);
+        
+        // Get transactions for all user accounts
+        Page<Transaction> transactions = transactionRepository.findBySourceAccountIdIn(accountIds, pageable);
+        
+        return transactions.map(this::mapToDto);
     }
 
     private Transaction findTransactionById(UUID transactionId) {

@@ -85,4 +85,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
      */
     @Query("SELECT t FROM Transaction t WHERE t.status = 'FAILED' AND t.failureReason IS NOT NULL ORDER BY t.updatedAt DESC")
     List<Transaction> findFailedTransactionsWithReasons();
+
+    /**
+     * Find transactions by user (through account lookup).
+     * Note: This requires joining with account service data or using a different approach.
+     * For now, we'll add a method to find by source account IDs.
+     */
+    @Query("SELECT t FROM Transaction t WHERE t.sourceAccountId IN :accountIds ORDER BY t.createdAt DESC")
+    Page<Transaction> findBySourceAccountIdIn(@Param("accountIds") List<UUID> accountIds, Pageable pageable);
 } 

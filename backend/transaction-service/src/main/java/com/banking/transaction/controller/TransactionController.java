@@ -173,4 +173,16 @@ public class TransactionController {
         List<TransactionDto> transactions = transactionService.getPendingTransactionsOlderThan(hours);
         return ResponseEntity.ok(transactions);
     }
+
+    /**
+     * Retrieves transaction history for a user across all their accounts.
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<Page<TransactionDto>> getUserTransactions(
+            @PathVariable UUID userId,
+            Pageable pageable) {
+        log.info("Getting transaction history for user: {}", userId);
+        Page<TransactionDto> transactions = transactionService.getUserTransactions(userId, pageable);
+        return ResponseEntity.ok(transactions);
+    }
 } 

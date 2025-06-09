@@ -15,18 +15,31 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
           loader: "babel-loader",
           options: {
-            presets: ["@babel/preset-react", "@babel/preset-env"],
+            presets: [
+              "@babel/preset-react", 
+              "@babel/preset-env"
+            ],
           },
         },
       },
       {
         test: /\.css$/,
         use: [MiniCssExtractPlugin.loader, "css-loader"],
+      },
+      {
+        test: /\.(png|jpe?g|gif|svg)$/,
+        use: {
+          loader: "file-loader",
+          options: {
+            name: "[name].[ext]",
+            outputPath: "images/",
+          },
+        },
       },
     ],
   },
@@ -35,18 +48,31 @@ module.exports = {
       name: "transactionMfe",
       filename: "remoteEntry.js",
       exposes: {
-        "./TransactionHistory": "./src/TransactionHistory",
+        "./TransactionHistory": "./src/components/TransactionHistory.jsx",
+        "./TransactionApp": "./src/components/TransactionApp.jsx",
       },
       shared: {
-        react: { singleton: true, requiredVersion: "^18.2.0" },
-        "react-dom": { singleton: true, requiredVersion: "^18.2.0" },
-        "react-router-dom": { singleton: true, requiredVersion: "^6.8.1" },
-        antd: { singleton: true, requiredVersion: "^5.12.8" },
+        react: {
+          singleton: true,
+          requiredVersion: "^18.2.0",
+        },
+        "react-dom": {
+          singleton: true,
+          requiredVersion: "^18.2.0",
+        },
+        "react-router-dom": {
+          singleton: true,
+          requiredVersion: "^6.8.1",
+        },
+        antd: {
+          singleton: true,
+          requiredVersion: "^5.12.8",
+        },
       },
     }),
     new HtmlWebpackPlugin({
       template: "./public/index.html",
-      title: "Transaction History",
+      title: "Transaction Management",
     }),
     new MiniCssExtractPlugin(),
   ],

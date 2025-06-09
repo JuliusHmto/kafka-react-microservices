@@ -184,6 +184,7 @@ services:
       DB_PORT: 5432
       KAFKA_HOST: kafka
       KAFKA_PORT: 29092
+      ACCOUNT_SERVICE_URL: http://account-service:8080
       SPRING_PROFILES_ACTIVE: docker
     healthcheck:
       test: ["CMD", "pgrep", "-f", "java.*app.jar"]

@@ -15,7 +15,8 @@ import {
   Descriptions,
   Typography,
   Empty,
-  Spin
+  Spin,
+  Alert
 } from 'antd';
 import {
   SearchOutlined,
@@ -29,20 +30,39 @@ import {
   CarOutlined,
   HomeOutlined,
   TrophyOutlined,
-  CreditCardOutlined
+  CreditCardOutlined,
+  PlusOutlined
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
+import { 
+  TransactionService, 
+  formatCurrency, 
+  getTransactionTypeLabel, 
+  getTransactionStatusLabel, 
+  getTransactionStatusColor 
+} from '../services/transactionService';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
+// Demo user ID for testing
+const DEMO_USER_ID = 'b061f043-07b3-4006-be9f-b75e90631b96';
+
 const TransactionHistory = () => {
+  const navigate = useNavigate();
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
   const [filters, setFilters] = useState({
     search: '',
     type: 'all',
@@ -51,137 +71,61 @@ const TransactionHistory = () => {
     account: 'all'
   });
 
-  // Mock transaction data
+  // Load transaction data from backend
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      const mockTransactions = [
-        {
-          id: 'TXN-001',
-          date: '2024-01-15T10:30:00Z',
-          description: 'Amazon Purchase - Electronics',
-          amount: -89.95,
-          type: 'DEBIT',
-          category: 'Shopping',
-          account: 'ACC-001-5678',
-          accountType: 'CHECKING',
-          status: 'COMPLETED',
-          reference: 'AMZ-789456123',
-          merchant: 'Amazon.com',
-          location: 'Online',
-          balance: 12457.94
-        },
-        {
-          id: 'TXN-002',
-          date: '2024-01-14T09:00:00Z',
-          description: 'Salary Deposit - TechCorp Inc',
-          amount: 3500.00,
-          type: 'CREDIT',
-          category: 'Income',
-          account: 'ACC-001-5678',
-          accountType: 'CHECKING',
-          status: 'COMPLETED',
-          reference: 'SAL-202401-001',
-          merchant: 'TechCorp Inc',
-          location: 'Direct Deposit',
-          balance: 12547.89
-        },
-        {
-          id: 'TXN-003',
-          date: '2024-01-13T16:45:00Z',
-          description: 'Shell Gas Station',
-          amount: -45.20,
-          type: 'DEBIT',
-          category: 'Transportation',
-          account: 'ACC-001-5678',
-          accountType: 'CHECKING',
-          status: 'COMPLETED',
-          reference: 'SHELL-456789',
-          merchant: 'Shell',
-          location: 'Main St, Downtown',
-          balance: 9047.89
-        },
-        {
-          id: 'TXN-004',
-          date: '2024-01-12T08:00:00Z',
-          description: 'Mortgage Payment - First National Bank',
-          amount: -1850.00,
-          type: 'DEBIT',
-          category: 'Housing',
-          account: 'ACC-001-5678',
-          accountType: 'CHECKING',
-          status: 'COMPLETED',
-          reference: 'MORT-202401-001',
-          merchant: 'First National Bank',
-          location: 'Auto Payment',
-          balance: 9093.09
-        },
-        {
-          id: 'TXN-005',
-          date: '2024-01-11T14:20:00Z',
-          description: 'Investment Dividend - Growth Fund',
-          amount: 125.75,
-          type: 'CREDIT',
-          category: 'Investment',
-          account: 'ACC-002-9012',
-          accountType: 'SAVINGS',
-          status: 'COMPLETED',
-          reference: 'DIV-GF-001',
-          merchant: 'Growth Fund LLC',
-          location: 'Investment Account',
-          balance: 45766.38
-        },
-        {
-          id: 'TXN-006',
-          date: '2024-01-10T12:15:00Z',
-          description: 'Grocery Store - Fresh Market',
-          amount: -127.83,
-          type: 'DEBIT',
-          category: 'Shopping',
-          account: 'ACC-001-5678',
-          accountType: 'CHECKING',
-          status: 'COMPLETED',
-          reference: 'FM-789123',
-          merchant: 'Fresh Market',
-          location: 'Oak Avenue',
-          balance: 10943.09
-        },
-        {
-          id: 'TXN-007',
-          date: '2024-01-09T19:30:00Z',
-          description: 'Netflix Subscription',
-          amount: -15.99,
-          type: 'DEBIT',
-          category: 'Entertainment',
-          account: 'ACC-003-3456',
-          accountType: 'CREDIT',
-          status: 'COMPLETED',
-          reference: 'NFLX-SUB-001',
-          merchant: 'Netflix Inc',
-          location: 'Online',
-          balance: -2831.93
-        },
-        {
-          id: 'TXN-008',
-          date: '2024-01-08T11:45:00Z',
-          description: 'ATM Withdrawal',
-          amount: -200.00,
-          type: 'DEBIT',
-          category: 'Cash',
-          account: 'ACC-001-5678',
-          accountType: 'CHECKING',
-          status: 'COMPLETED',
-          reference: 'ATM-789456',
-          merchant: 'SecureBank ATM',
-          location: 'Downtown Branch',
-          balance: 11070.92
-        }
-      ];
-      setTransactions(mockTransactions);
-      setFilteredTransactions(mockTransactions);
-      setLoading(false);
-    }, 1000);
+    loadTransactions();
   }, []);
+
+  const loadTransactions = async (page = 0, size = 10) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await TransactionService.getUserTransactions(DEMO_USER_ID, page, size);
+      
+      // Transform backend response to match UI expectations
+      const transformedTransactions = response.content.map(txn => ({
+        id: txn.id,
+        date: txn.createdAt,
+        description: txn.description,
+        amount: txn.type === 'WITHDRAWAL' ? -txn.amount : txn.amount,
+        type: txn.type,
+        category: getCategoryFromType(txn.type),
+        account: txn.sourceAccountId,
+        accountType: 'CHECKING', // Default for now
+        status: txn.status,
+        reference: txn.reference,
+        merchant: 'N/A', // Not available from backend
+        location: 'N/A', // Not available from backend
+        balance: 0 // Not available in transaction records
+      }));
+      
+      setTransactions(transformedTransactions);
+      setFilteredTransactions(transformedTransactions);
+      setPagination({
+        current: response.number + 1,
+        pageSize: response.size,
+        total: response.totalElements
+      });
+      
+    } catch (err) {
+      const errorMessage = err.message || 'Failed to load transactions';
+      setError(errorMessage);
+      console.error('Error loading transactions:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategoryFromType = (type) => {
+    switch (type) {
+      case 'DEPOSIT': return 'Income';
+      case 'WITHDRAWAL': return 'Cash';
+      case 'TRANSFER': return 'Transfer';
+      case 'PAYMENT': return 'Shopping';
+      default: return 'Other';
+    }
+  };
 
   // Filter transactions based on current filters
   useEffect(() => {
@@ -206,55 +150,39 @@ const TransactionHistory = () => {
       filtered = filtered.filter(txn => txn.category === filters.category);
     }
 
+    // Date range filter
+    if (filters.dateRange && filters.dateRange[0] && filters.dateRange[1]) {
+      const [startDate, endDate] = filters.dateRange;
+      filtered = filtered.filter(txn => {
+        const txnDate = dayjs(txn.date);
+        return txnDate.isAfter(startDate.startOf('day')) && 
+               txnDate.isBefore(endDate.endOf('day'));
+      });
+    }
+
     // Account filter
     if (filters.account !== 'all') {
       filtered = filtered.filter(txn => txn.account === filters.account);
     }
 
-    // Date range filter
-    if (filters.dateRange && filters.dateRange.length === 2) {
-      const [start, end] = filters.dateRange;
-      filtered = filtered.filter(txn => {
-        const txnDate = dayjs(txn.date);
-        return txnDate.isAfter(start.startOf('day')) && txnDate.isBefore(end.endOf('day'));
-      });
-    }
-
     setFilteredTransactions(filtered);
-  }, [filters, transactions]);
+  }, [transactions, filters]);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+
 
   const getTransactionIcon = (category) => {
-    const iconMap = {
-      Shopping: <ShoppingCartOutlined />,
-      Income: <BankOutlined />,
-      Transportation: <CarOutlined />,
-      Housing: <HomeOutlined />,
-      Investment: <TrophyOutlined />,
-      Entertainment: <CreditCardOutlined />,
-      Cash: <BankOutlined />
-    };
-    return iconMap[category] || <BankOutlined />;
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'green';
-      case 'PENDING':
-        return 'orange';
-      case 'FAILED':
-        return 'red';
-      default:
-        return 'default';
+    switch (category) {
+      case 'Shopping': return <ShoppingCartOutlined />;
+      case 'Transportation': return <CarOutlined />;
+      case 'Housing': return <HomeOutlined />;
+      case 'Investment': return <TrophyOutlined />;
+      case 'Income': return <BankOutlined />;
+      case 'Cash': return <CreditCardOutlined />;
+      default: return <BankOutlined />;
     }
   };
+
+
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -365,7 +293,9 @@ const TransactionHistory = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status) => (
-        <Tag color={getStatusColor(status)}>{status}</Tag>
+        <Tag color={getTransactionStatusColor(status)}>
+          {getTransactionStatusLabel(status)}
+        </Tag>
       ),
     },
     {
@@ -397,13 +327,23 @@ const TransactionHistory = () => {
   return (
     <div style={{ padding: '24px' }}>
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '8px' }}>
-          Transaction History
-        </h1>
-        <p style={{ color: '#8c8c8c', fontSize: '16px', marginBottom: 0 }}>
-          View and manage your transaction history across all accounts
-        </p>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: '600', marginBottom: '8px' }}>
+            Transaction History
+          </h1>
+          <p style={{ color: '#8c8c8c', fontSize: '16px', marginBottom: 0 }}>
+            View and manage your transaction history across all accounts
+          </p>
+        </div>
+        <Button 
+          type="primary" 
+          size="large"
+          icon={<PlusOutlined />}
+          onClick={() => navigate('/new')}
+        >
+          New Transaction
+        </Button>
       </div>
 
       {/* Summary Cards */}
@@ -505,6 +445,22 @@ const TransactionHistory = () => {
         </Row>
       </Card>
 
+      {/* Error Display */}
+      {error && (
+        <Alert
+          message="Error Loading Transactions"
+          description={error}
+          type="error"
+          style={{ marginBottom: '24px' }}
+          showIcon
+          action={
+            <Button size="small" onClick={() => loadTransactions()}>
+              Retry
+            </Button>
+          }
+        />
+      )}
+
       {/* Transactions Table */}
       <Card>
         <Table
@@ -513,11 +469,19 @@ const TransactionHistory = () => {
           rowKey="id"
           loading={loading}
           pagination={{
-            pageSize: 10,
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => 
               `${range[0]}-${range[1]} of ${total} transactions`,
+            onChange: (page, pageSize) => {
+              loadTransactions(page - 1, pageSize);
+            },
+            onShowSizeChange: (current, size) => {
+              loadTransactions(0, size);
+            }
           }}
           scroll={{ x: 1200 }}
         />
