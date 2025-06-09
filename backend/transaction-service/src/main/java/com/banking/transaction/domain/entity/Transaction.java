@@ -21,13 +21,7 @@ import java.util.UUID;
  * - Business rules implementation
  */
 @Entity
-@Table(name = "transactions", indexes = {
-    @Index(name = "idx_transaction_reference", columnList = "reference_value"),
-    @Index(name = "idx_source_account", columnList = "source_account_id"),
-    @Index(name = "idx_target_account", columnList = "target_account_id"),
-    @Index(name = "idx_status", columnList = "status"),
-    @Index(name = "idx_created_at", columnList = "created_at")
-})
+@Table(name = "transactions")
 public class Transaction {
 
     @Id
@@ -37,11 +31,11 @@ public class Transaction {
     private UUID id;
 
     @Embedded
-    @AttributeOverride(name = "value", column = @Column(name = "reference_value", unique = true, nullable = false))
+    @AttributeOverride(name = "value", column = @Column(name = "transaction_reference", unique = true, nullable = false))
     private TransactionReference reference;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @Column(name = "transaction_type", nullable = false)
     private TransactionType type;
 
     @Enumerated(EnumType.STRING)
@@ -55,10 +49,10 @@ public class Transaction {
     })
     private Money amount;
 
-    @Column(name = "source_account_id")
+    @Column(name = "from_account_id")
     private UUID sourceAccountId;
 
-    @Column(name = "target_account_id")
+    @Column(name = "to_account_id")
     private UUID targetAccountId;
 
     @Column(name = "description", length = 500)
@@ -75,7 +69,7 @@ public class Transaction {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "processed_at")
+    @Column(name = "completed_at")
     private LocalDateTime processedAt;
 
     @Column(name = "failure_reason", length = 1000)
@@ -90,10 +84,40 @@ public class Transaction {
         this.reference = TransactionReference.generate();
         this.type = type;
         this.amount = amount;
-        this.sourceAccountId = sourceAccountId;
-        this.targetAccountId = targetAccountId;
         this.description = description;
         this.status = TransactionStatus.PENDING;
+        
+        // Handle account mapping based on transaction type according to database constraints:
+        // DEPOSIT: from_account_id = NULL, to_account_id = receiving account
+        // WITHDRAWAL: from_account_id = source account, to_account_id = NULL  
+        // TRANSFER/PAYMENT: from_account_id = source account, to_account_id = target account
+        // REFUND: can have any combination
+        
+        switch (type) {
+            case DEPOSIT:
+                // For deposits, sourceAccountId is the account receiving the deposit
+                this.sourceAccountId = null;
+                this.targetAccountId = sourceAccountId;
+                break;
+            case WITHDRAWAL:
+                // For withdrawals, sourceAccountId is the account being debited
+                this.sourceAccountId = sourceAccountId;
+                this.targetAccountId = null;
+                break;
+            case TRANSFER:
+            case PAYMENT:
+                // For transfers/payments, need both accounts
+                this.sourceAccountId = sourceAccountId;
+                this.targetAccountId = targetAccountId;
+                break;
+            case REFUND:
+                // For refunds, use accounts as provided
+                this.sourceAccountId = sourceAccountId;
+                this.targetAccountId = targetAccountId;
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported transaction type: " + type);
+        }
     }
 
     public Transaction(TransactionType type, Money amount, UUID sourceAccountId, String description) {

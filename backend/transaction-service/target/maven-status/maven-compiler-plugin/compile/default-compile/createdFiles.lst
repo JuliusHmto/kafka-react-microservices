@@ -3,6 +3,7 @@ com\banking\transaction\config\KafkaConfig.class
 com\banking\transaction\domain\entity\TransactionStatus.class
 com\banking\transaction\dto\AccountDto.class
 com\banking\transaction\dto\TransactionDto.class
+com\banking\transaction\domain\entity\Transaction$1.class
 com\banking\transaction\TransactionServiceApplication.class
 com\banking\transaction\domain\entity\Transaction.class
 com\banking\transaction\repository\TransactionRepository.class

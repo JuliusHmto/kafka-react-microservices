@@ -9,6 +9,7 @@ import com.banking.account.dto.AccountResponse;
 import com.banking.account.dto.CreateAccountRequest;
 import com.banking.account.dto.CreateTransactionRequest;
 import com.banking.account.dto.MoneyTransactionRequest;
+import com.banking.account.dto.TransactionDto;
 import com.banking.account.repository.AccountRepository;
 import com.banking.account.event.AccountCreatedEvent;
 import com.banking.account.event.MoneyTransactionEvent;
@@ -124,7 +125,18 @@ public class AccountService {
                 request.getDescription() != null ? request.getDescription() : "Deposit to account " + savedAccount.getAccountNumber().getValue(),
                 null
         );
-        transactionServiceClient.createTransaction(transactionRequest);
+        
+        // Test connectivity first
+        if (!transactionServiceClient.isTransactionServiceAvailable()) {
+            System.err.println("WARNING: Transaction service is not available. Transaction will not be logged.");
+        }
+        
+        TransactionDto transactionDto = transactionServiceClient.createTransaction(transactionRequest);
+        if (transactionDto != null) {
+            System.out.println("SUCCESS: Transaction record created with reference: " + transactionDto.getReference());
+        } else {
+            System.err.println("WARNING: Failed to create transaction record in transaction service");
+        }
         
         // Publish money deposited event
         MoneyTransactionEvent event = new MoneyTransactionEvent(
@@ -164,7 +176,18 @@ public class AccountService {
                 request.getDescription() != null ? request.getDescription() : "Withdrawal from account " + savedAccount.getAccountNumber().getValue(),
                 null
         );
-        transactionServiceClient.createTransaction(transactionRequest);
+        
+        // Test connectivity first
+        if (!transactionServiceClient.isTransactionServiceAvailable()) {
+            System.err.println("WARNING: Transaction service is not available. Transaction will not be logged.");
+        }
+        
+        TransactionDto transactionDto = transactionServiceClient.createTransaction(transactionRequest);
+        if (transactionDto != null) {
+            System.out.println("SUCCESS: Transaction record created with reference: " + transactionDto.getReference());
+        } else {
+            System.err.println("WARNING: Failed to create transaction record in transaction service");
+        }
         
         // Publish money withdrawn event
         MoneyTransactionEvent event = new MoneyTransactionEvent(

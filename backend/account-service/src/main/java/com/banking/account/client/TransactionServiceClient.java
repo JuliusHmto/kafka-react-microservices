@@ -32,8 +32,10 @@ public class TransactionServiceClient {
         try {
             log.info("Creating transaction record: type={}, amount={}, account={}", 
                     request.getType(), request.getAmount(), request.getSourceAccountId());
+            log.debug("Transaction service URL: {}", transactionServiceUrl);
 
             String url = transactionServiceUrl + "/api/transactions";
+            log.debug("Making POST request to: {}", url);
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -51,10 +53,43 @@ public class TransactionServiceClient {
             }
             
         } catch (Exception e) {
-            log.error("Error creating transaction record: {}", e.getMessage(), e);
+            log.error("Error creating transaction record - URL: {}, Error: {}", 
+                transactionServiceUrl + "/api/transactions", e.getMessage(), e);
+            
+            // Check if this is a connection error
+            if (e.getMessage().contains("Connection refused") || e.getMessage().contains("ConnectException")) {
+                log.error("Cannot connect to transaction service at {}. Is the service running?", transactionServiceUrl);
+            }
+            
             // Don't fail the main transaction if transaction service is down
             // This is a non-critical operation for logging purposes
+            log.warn("Transaction service call failed, continuing without transaction record");
             return null;
+        }
+    }
+
+    /**
+     * Tests connectivity to the transaction service.
+     */
+    public boolean isTransactionServiceAvailable() {
+        try {
+            log.info("Testing connectivity to transaction service at: {}", transactionServiceUrl);
+            
+            // Try to make a simple GET request to check if service is up
+            // Even if it returns 405, it means the service is reachable
+            String url = transactionServiceUrl + "/api/transactions";
+            restTemplate.getForEntity(url, String.class);
+            
+            return true;
+        } catch (Exception e) {
+            if (e.getMessage().contains("405")) {
+                // Method not allowed is actually good - service is reachable
+                log.info("Transaction service is reachable (got 405 Method Not Allowed as expected)");
+                return true;
+            }
+            
+            log.error("Transaction service is not available: {}", e.getMessage());
+            return false;
         }
     }
 } 

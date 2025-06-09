@@ -1,0 +1,7 @@
+{
+  "type": "DEPOSIT",
+  "amount": 100.00,
+  "currency": "USD",
+  "sourceAccountId": "d3hhef99-9c0b-4ef8-bb6d-6bb9bd380a44",
+  "description": "Test transaction after schema fix"
+} 

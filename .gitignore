@@ -1,3 +1,4 @@
+# ===== NODE.JS / FRONTEND =====
 # Dependencies
 node_modules/
 npm-debug.log*
@@ -17,32 +18,6 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
-
-# IDE/Editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Logs
-logs
-*.log
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
 
 # Coverage directory used by tools like istanbul
 coverage/
@@ -79,15 +54,175 @@ jspm_packages/
 .out
 .storybook-out
 
-# Temporary folders
-tmp/
-temp/
+# TypeScript cache
+*.tsbuildinfo
 
+# ESLint cache
+.eslintcache
+
+# ===== JAVA / MAVEN =====
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# ===== SPRING BOOT =====
+# Spring Boot
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Spring Boot DevTools
+.devtools.restart
+
+# ===== IDE/EDITOR FILES =====
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+*.swp
+*.swo
+*~
+
+# Vim
+*.swp
+*.swo
+
+# ===== OS GENERATED FILES =====
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ===== DOCKER =====
 # Docker
 .dockerignore
 
+# ===== LOGS =====
+# Application logs
+logs/
+*.log
+log/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ===== TEMPORARY FILES =====
+# Temporary folders
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# ===== TESTING =====
+# JUnit
+/test-output/
+/test-reports/
+
+# ===== DATABASE =====
+# H2 Database
+*.db
+*.trace.db
+*.lock.db
+
+# ===== KAFKA =====
+# Kafka logs (if running locally)
+kafka-logs/
+
+# ===== SECURITY =====
+# Private keys
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+*.truststore
+
+# ===== OTHER =====
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
-# TypeScript cache
-*.tsbuildinfo 
+# MacOS Spotlight
+.Spotlight-V100 
