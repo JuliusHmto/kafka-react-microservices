@@ -52,7 +52,8 @@ public class TransactionService {
                 amount, 
                 request.getSourceAccountId(),
                 request.getTargetAccountId(),
-                request.getDescription()
+                request.getDescription(),
+                request.getUserId()
             );
 
             if (request.getExternalReference() != null) {
@@ -216,29 +217,38 @@ public class TransactionService {
     }
 
     /**
-     * Retrieves transactions for a user across all their accounts.
+     * Retrieves transactions for a user using direct user ID lookup.
      */
     @Transactional(readOnly = true)
     public Page<TransactionDto> getUserTransactions(UUID userId, Pageable pageable) {
         log.info("Getting transactions for user: {}", userId);
         
-        // Get all accounts for the user
-        List<AccountDto> userAccounts = accountServiceClient.getUserAccounts(userId);
+        // Use direct user ID lookup now that we have userId field
+        Page<Transaction> transactions = transactionRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         
-        if (userAccounts.isEmpty()) {
-            log.info("No accounts found for user: {}", userId);
-            return Page.empty(pageable);
-        }
+        return transactions.map(this::mapToDto);
+    }
+
+    /**
+     * Retrieves transactions for a user by status.
+     */
+    @Transactional(readOnly = true)
+    public Page<TransactionDto> getUserTransactionsByStatus(UUID userId, TransactionStatus status, Pageable pageable) {
+        log.info("Getting transactions for user {} with status {}", userId, status);
         
-        // Extract account IDs
-        List<UUID> accountIds = userAccounts.stream()
-                .map(AccountDto::getId)
-                .collect(Collectors.toList());
+        Page<Transaction> transactions = transactionRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status, pageable);
         
-        log.info("Found {} accounts for user {}, getting transactions", accountIds.size(), userId);
+        return transactions.map(this::mapToDto);
+    }
+
+    /**
+     * Retrieves transactions for a user by type.
+     */
+    @Transactional(readOnly = true)
+    public Page<TransactionDto> getUserTransactionsByType(UUID userId, TransactionType type, Pageable pageable) {
+        log.info("Getting transactions for user {} with type {}", userId, type);
         
-        // Get transactions for all user accounts
-        Page<Transaction> transactions = transactionRepository.findBySourceAccountIdIn(accountIds, pageable);
+        Page<Transaction> transactions = transactionRepository.findByUserIdAndTypeOrderByCreatedAtDesc(userId, type, pageable);
         
         return transactions.map(this::mapToDto);
     }
@@ -260,6 +270,7 @@ public class TransactionService {
                 .targetAccountId(transaction.getTargetAccountId())
                 .description(transaction.getDescription())
                 .externalReference(transaction.getExternalReference())
+                .userId(transaction.getUserId())
                 .createdAt(transaction.getCreatedAt())
                 .updatedAt(transaction.getUpdatedAt())
                 .processedAt(transaction.getProcessedAt())

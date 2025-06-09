@@ -79,6 +79,7 @@ public class EventPublisherService {
                     .targetAccountId(transaction.getTargetAccountId() != null ? transaction.getTargetAccountId().toString() : null)
                     .description(transaction.getDescription())
                     .externalReference(transaction.getExternalReference())
+                    .userId(transaction.getUserId() != null ? transaction.getUserId().toString() : null)
                     .timestamp(transaction.getUpdatedAt())
                     .build();
 

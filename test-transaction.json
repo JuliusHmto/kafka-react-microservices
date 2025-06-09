@@ -2,6 +2,7 @@
   "type": "DEPOSIT",
   "amount": 100.00,
   "currency": "USD",
-  "sourceAccountId": "d3hhef99-9c0b-4ef8-bb6d-6bb9bd380a44",
-  "description": "Test transaction after schema fix"
+  "sourceAccountId": "69961b97-0b7b-4eb5-8e1a-baaaa85d2e23",
+  "userId": "b061f043-07b3-4006-be9f-b75e90631b96",
+  "description": "Testdeposit"
 } 

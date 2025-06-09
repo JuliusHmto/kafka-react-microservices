@@ -75,17 +75,21 @@ public class Transaction {
     @Column(name = "failure_reason", length = 1000)
     private String failureReason;
 
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
+
     // Constructors
     protected Transaction() {
         // JPA requires default constructor
     }
 
-    public Transaction(TransactionType type, Money amount, UUID sourceAccountId, UUID targetAccountId, String description) {
+    public Transaction(TransactionType type, Money amount, UUID sourceAccountId, UUID targetAccountId, String description, UUID userId) {
         this.reference = TransactionReference.generate();
         this.type = type;
         this.amount = amount;
         this.description = description;
         this.status = TransactionStatus.PENDING;
+        this.userId = userId;
         
         // Handle account mapping based on transaction type according to database constraints:
         // DEPOSIT: from_account_id = NULL, to_account_id = receiving account
@@ -120,8 +124,8 @@ public class Transaction {
         }
     }
 
-    public Transaction(TransactionType type, Money amount, UUID sourceAccountId, String description) {
-        this(type, amount, sourceAccountId, null, description);
+    public Transaction(TransactionType type, Money amount, UUID sourceAccountId, String description, UUID userId) {
+        this(type, amount, sourceAccountId, null, description, userId);
     }
 
     // Business methods
@@ -289,9 +293,13 @@ public class Transaction {
         return failureReason;
     }
 
+    public UUID getUserId() {
+        return userId;
+    }
+
     @Override
     public String toString() {
-        return String.format("Transaction{id=%s, reference=%s, type=%s, status=%s, amount=%s}", 
-            id, reference, type, status, amount);
+        return String.format("Transaction{id=%s, reference=%s, type=%s, status=%s, amount=%s, userId=%s}", 
+            id, reference, type, status, amount, userId);
     }
 } 

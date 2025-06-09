@@ -30,6 +30,7 @@ public class TransactionDto {
     private UUID targetAccountId;
     private String description;
     private String externalReference;
+    private UUID userId;
     
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;

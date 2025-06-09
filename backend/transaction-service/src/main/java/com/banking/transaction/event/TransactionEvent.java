@@ -29,6 +29,7 @@ public class TransactionEvent {
     private String targetAccountId;
     private String description;
     private String externalReference;
+    private String userId;
     
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime timestamp;

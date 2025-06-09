@@ -1,6 +1,7 @@
 package com.banking.transaction.controller;
 
 import com.banking.transaction.domain.entity.TransactionStatus;
+import com.banking.transaction.domain.entity.TransactionType;
 import com.banking.transaction.dto.CreateTransactionRequest;
 import com.banking.transaction.dto.TransactionDto;
 import com.banking.transaction.service.TransactionService;
@@ -175,7 +176,7 @@ public class TransactionController {
     }
 
     /**
-     * Retrieves transaction history for a user across all their accounts.
+     * Retrieves transaction history for a user.
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<Page<TransactionDto>> getUserTransactions(
@@ -184,5 +185,43 @@ public class TransactionController {
         log.info("Getting transaction history for user: {}", userId);
         Page<TransactionDto> transactions = transactionService.getUserTransactions(userId, pageable);
         return ResponseEntity.ok(transactions);
+    }
+
+    /**
+     * Retrieves transaction history for a user by status.
+     */
+    @GetMapping("/user/{userId}/status/{status}")
+    public ResponseEntity<Page<TransactionDto>> getUserTransactionsByStatus(
+            @PathVariable UUID userId,
+            @PathVariable String status,
+            Pageable pageable) {
+        log.info("Getting transactions for user {} with status {}", userId, status);
+        try {
+            TransactionStatus transactionStatus = TransactionStatus.valueOf(status.toUpperCase());
+            Page<TransactionDto> transactions = transactionService.getUserTransactionsByStatus(userId, transactionStatus, pageable);
+            return ResponseEntity.ok(transactions);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid transaction status: {}", status);
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /**
+     * Retrieves transaction history for a user by type.
+     */
+    @GetMapping("/user/{userId}/type/{type}")
+    public ResponseEntity<Page<TransactionDto>> getUserTransactionsByType(
+            @PathVariable UUID userId,
+            @PathVariable String type,
+            Pageable pageable) {
+        log.info("Getting transactions for user {} with type {}", userId, type);
+        try {
+            TransactionType transactionType = TransactionType.valueOf(type.toUpperCase());
+            Page<TransactionDto> transactions = transactionService.getUserTransactionsByType(userId, transactionType, pageable);
+            return ResponseEntity.ok(transactions);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid transaction type: {}", type);
+            return ResponseEntity.badRequest().build();
+        }
     }
 } 

@@ -93,4 +93,33 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
      */
     @Query("SELECT t FROM Transaction t WHERE t.sourceAccountId IN :accountIds ORDER BY t.createdAt DESC")
     Page<Transaction> findBySourceAccountIdIn(@Param("accountIds") List<UUID> accountIds, Pageable pageable);
+
+    /**
+     * Find transactions by user ID.
+     */
+    Page<Transaction> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+
+    /**
+     * Find transactions by user ID and status.
+     */
+    Page<Transaction> findByUserIdAndStatusOrderByCreatedAtDesc(UUID userId, TransactionStatus status, Pageable pageable);
+
+    /**
+     * Find transactions by user ID and type.
+     */
+    Page<Transaction> findByUserIdAndTypeOrderByCreatedAtDesc(UUID userId, TransactionType type, Pageable pageable);
+
+    /**
+     * Find transactions by user ID within date range.
+     */
+    @Query("SELECT t FROM Transaction t WHERE t.userId = :userId " +
+           "AND t.createdAt BETWEEN :startDate AND :endDate ORDER BY t.createdAt DESC")
+    List<Transaction> findByUserIdAndDateRange(@Param("userId") UUID userId, 
+                                               @Param("startDate") LocalDateTime startDate, 
+                                               @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Count transactions by user ID and status.
+     */
+    long countByUserIdAndStatus(UUID userId, TransactionStatus status);
 } 
