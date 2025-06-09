@@ -7,7 +7,7 @@ import { AccountService, formatCurrency, getAccountTypeLabel, getAccountStatusLa
 const { Title, Text } = Typography;
 
 // Demo user ID for testing
-const DEMO_USER_ID = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+const DEMO_USER_ID = 'b061f043-07b3-4006-be9f-b75e90631b96';
 
 const AccountList = () => {
   const navigate = useNavigate();

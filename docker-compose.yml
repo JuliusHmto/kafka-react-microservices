@@ -66,6 +66,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U banking_user -d banking_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
     networks:
       - banking-network
 
@@ -127,6 +134,35 @@ services:
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
       CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+    networks:
+      - banking-network
+
+  # Account Service
+  account-service:
+    build:
+      context: ./backend/account-service
+      dockerfile: Dockerfile
+    container_name: banking-account-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 29092
+      SPRING_PROFILES_ACTIVE: docker
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "java.*app.jar"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
     networks:
       - banking-network
 

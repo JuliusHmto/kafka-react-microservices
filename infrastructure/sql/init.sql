@@ -19,17 +19,17 @@ CREATE TABLE users (
     last_login TIMESTAMP
 );
 
--- Account types enum
-CREATE TYPE account_type AS ENUM ('CHECKING', 'SAVINGS', 'BUSINESS', 'JOINT', 'STUDENT', 'PREMIUM');
-CREATE TYPE account_status AS ENUM ('PENDING', 'ACTIVE', 'SUSPENDED', 'CLOSED', 'FROZEN');
+-- Account types as VARCHAR with constraints (Hibernate-friendly)
+-- CREATE TYPE account_type AS ENUM ('CHECKING', 'SAVINGS', 'BUSINESS', 'JOINT', 'STUDENT', 'PREMIUM');
+-- CREATE TYPE account_status AS ENUM ('PENDING', 'ACTIVE', 'SUSPENDED', 'CLOSED', 'FROZEN');
 
--- Accounts table
+-- Accounts table - Updated for better Hibernate compatibility
 CREATE TABLE accounts (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY,
     account_number VARCHAR(20) UNIQUE NOT NULL,
     user_id UUID NOT NULL REFERENCES users(id),
-    account_type account_type NOT NULL,
-    status account_status DEFAULT 'PENDING',
+    account_type VARCHAR(20) NOT NULL CHECK (account_type IN ('CHECKING', 'SAVINGS', 'BUSINESS', 'JOINT', 'STUDENT', 'PREMIUM')),
+    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACTIVE', 'SUSPENDED', 'CLOSED', 'FROZEN')),
     balance DECIMAL(15,2) DEFAULT 0.00,
     available_balance DECIMAL(15,2) DEFAULT 0.00,
     currency VARCHAR(3) DEFAULT 'USD',
@@ -41,9 +41,9 @@ CREATE TABLE accounts (
     monthly_limit DECIMAL(15,2) DEFAULT 50000.00
 );
 
--- Transaction types and status
-CREATE TYPE transaction_type AS ENUM ('DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PAYMENT', 'REFUND');
-CREATE TYPE transaction_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED', 'PROCESSING');
+-- Transaction types and status as VARCHAR with constraints
+-- CREATE TYPE transaction_type AS ENUM ('DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PAYMENT', 'REFUND');
+-- CREATE TYPE transaction_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED', 'PROCESSING');
 
 -- Transactions table
 CREATE TABLE transactions (
@@ -51,10 +51,10 @@ CREATE TABLE transactions (
     transaction_reference VARCHAR(50) UNIQUE NOT NULL,
     from_account_id UUID REFERENCES accounts(id),
     to_account_id UUID REFERENCES accounts(id),
-    transaction_type transaction_type NOT NULL,
+    transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('DEPOSIT', 'WITHDRAWAL', 'TRANSFER', 'PAYMENT', 'REFUND')),
     amount DECIMAL(15,2) NOT NULL,
     currency VARCHAR(3) DEFAULT 'USD',
-    status transaction_status DEFAULT 'PENDING',
+    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED', 'PROCESSING')),
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
@@ -84,7 +84,7 @@ CREATE TABLE audit_events (
 );
 
 -- Fraud detection alerts
-CREATE TYPE fraud_status AS ENUM ('PENDING', 'CONFIRMED', 'FALSE_POSITIVE', 'INVESTIGATING');
+-- CREATE TYPE fraud_status AS ENUM ('PENDING', 'CONFIRMED', 'FALSE_POSITIVE', 'INVESTIGATING');
 
 CREATE TABLE fraud_alerts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -92,7 +92,7 @@ CREATE TABLE fraud_alerts (
     user_id UUID REFERENCES users(id),
     alert_type VARCHAR(50) NOT NULL,
     risk_score DECIMAL(5,2) NOT NULL,
-    status fraud_status DEFAULT 'PENDING',
+    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'CONFIRMED', 'FALSE_POSITIVE', 'INVESTIGATING')),
     description TEXT,
     detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     resolved_at TIMESTAMP,
@@ -101,14 +101,14 @@ CREATE TABLE fraud_alerts (
 );
 
 -- Notifications table
-CREATE TYPE notification_type AS ENUM ('EMAIL', 'SMS', 'PUSH', 'IN_APP');
-CREATE TYPE notification_status AS ENUM ('PENDING', 'SENT', 'FAILED', 'READ');
+-- CREATE TYPE notification_type AS ENUM ('EMAIL', 'SMS', 'PUSH', 'IN_APP');
+-- CREATE TYPE notification_status AS ENUM ('PENDING', 'SENT', 'FAILED', 'READ');
 
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id),
-    type notification_type NOT NULL,
-    status notification_status DEFAULT 'PENDING',
+    type VARCHAR(20) NOT NULL CHECK (type IN ('EMAIL', 'SMS', 'PUSH', 'IN_APP')),
+    status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SENT', 'FAILED', 'READ')),
     subject VARCHAR(200),
     content TEXT NOT NULL,
     recipient VARCHAR(200) NOT NULL,
@@ -154,14 +154,14 @@ CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Sample data for testing
-INSERT INTO users (username, email, password_hash, first_name, last_name, phone_number) VALUES
-('john.doe', 'john.doe@bank.com', '$2a$10$dummy.hash.for.testing', 'John', 'Doe', '+1234567890'),
-('jane.smith', 'jane.smith@bank.com', '$2a$10$dummy.hash.for.testing', 'Jane', 'Smith', '+1234567891'),
-('admin', 'admin@bank.com', '$2a$10$dummy.hash.for.testing', 'System', 'Administrator', '+1234567892');
+INSERT INTO users (id, username, email, password_hash, first_name, last_name, phone_number) VALUES
+('b061f043-07b3-4006-be9f-b75e90631b96', 'john.doe', 'john.doe@bank.com', '$2a$10$dummy.hash.for.testing', 'John', 'Doe', '+1234567890'),
+('b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a22', 'jane.smith', 'jane.smith@bank.com', '$2a$10$dummy.hash.for.testing', 'Jane', 'Smith', '+1234567891'),
+('c2ggde99-9c0b-4ef8-bb6d-6bb9bd380a33', 'admin', 'admin@bank.com', '$2a$10$dummy.hash.for.testing', 'System', 'Administrator', '+1234567892');
 
--- Sample accounts
-INSERT INTO accounts (account_number, user_id, account_type, status, balance, available_balance) VALUES
-('CHK001000001', (SELECT id FROM users WHERE username = 'john.doe'), 'CHECKING', 'ACTIVE', 5000.00, 5000.00),
-('SAV001000001', (SELECT id FROM users WHERE username = 'john.doe'), 'SAVINGS', 'ACTIVE', 15000.00, 15000.00),
-('CHK001000002', (SELECT id FROM users WHERE username = 'jane.smith'), 'CHECKING', 'ACTIVE', 3000.00, 3000.00),
-('SAV001000002', (SELECT id FROM users WHERE username = 'jane.smith'), 'SAVINGS', 'ACTIVE', 8000.00, 8000.00); 
+-- Sample accounts with explicit UUIDs
+INSERT INTO accounts (id, account_number, user_id, account_type, status, balance, available_balance) VALUES
+('d3hhef99-9c0b-4ef8-bb6d-6bb9bd380a44', 'CHK001000001', 'b061f043-07b3-4006-be9f-b75e90631b96', 'CHECKING', 'ACTIVE', 5000.00, 5000.00),
+('e4iifg99-9c0b-4ef8-bb6d-6bb9bd380a55', 'SAV001000001', 'b061f043-07b3-4006-be9f-b75e90631b96', 'SAVINGS', 'ACTIVE', 15000.00, 15000.00),
+('f5jjgh99-9c0b-4ef8-bb6d-6bb9bd380a66', 'CHK001000002', 'b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a22', 'CHECKING', 'ACTIVE', 3000.00, 3000.00),
+('g6kkhi99-9c0b-4ef8-bb6d-6bb9bd380a77', 'SAV001000002', 'b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a22', 'SAVINGS', 'ACTIVE', 8000.00, 8000.00); 

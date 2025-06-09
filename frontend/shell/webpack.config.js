@@ -6,7 +6,7 @@ module.exports = {
   mode: "development",
   entry: "./src/index.js",
   devServer: {
-    port: 3000,
+    port: 3101,
     historyApiFallback: true,
     headers: {
       "Access-Control-Allow-Origin": "*",

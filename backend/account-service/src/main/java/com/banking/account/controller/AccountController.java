@@ -47,6 +47,12 @@ public class AccountController {
             AccountResponse response = accountService.createAccount(request);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (Exception e) {
+            // Check if it's a foreign key constraint error for user_id
+            if (e.getMessage() != null && e.getMessage().contains("accounts_user_id_fkey")) {
+                throw new RuntimeException("User with ID " + request.getUserId() + " does not exist. " +
+                    "Please ensure the user exists before creating an account. " +
+                    "For development, you can run: scripts/fix-demo-user.ps1");
+            }
             throw new RuntimeException("Failed to create account: " + e.getMessage());
         }
     }

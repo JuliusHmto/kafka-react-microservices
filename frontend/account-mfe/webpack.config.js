@@ -48,7 +48,7 @@ module.exports = {
       name: "accountMfe",
       filename: "remoteEntry.js",
       exposes: {
-        "./AccountManagement": "./src/AccountManagement",
+        "./AccountManagement": "./src/AccountManagement.jsx",
       },
       shared: {
         react: {
