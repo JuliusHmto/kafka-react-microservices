@@ -122,6 +122,7 @@ public class AccountService {
                 request.getCurrency(),
                 savedAccount.getId(),
                 null,
+                savedAccount.getUserId(),
                 request.getDescription() != null ? request.getDescription() : "Deposit to account " + savedAccount.getAccountNumber().getValue(),
                 null
         );
@@ -173,6 +174,7 @@ public class AccountService {
                 request.getCurrency(),
                 savedAccount.getId(),
                 null,
+                savedAccount.getUserId(),
                 request.getDescription() != null ? request.getDescription() : "Withdrawal from account " + savedAccount.getAccountNumber().getValue(),
                 null
         );

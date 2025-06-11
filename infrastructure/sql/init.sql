@@ -56,8 +56,12 @@ CREATE TABLE transactions (
     currency VARCHAR(3) DEFAULT 'USD',
     status VARCHAR(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED', 'PROCESSING')),
     description TEXT,
+    user_id UUID NOT NULL REFERENCES users(id),
+    external_reference VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
+    failure_reason VARCHAR(1000),
     metadata JSONB,
     
     -- Constraints
@@ -129,6 +133,7 @@ CREATE INDEX idx_transactions_to_account ON transactions(to_account_id);
 CREATE INDEX idx_transactions_status ON transactions(status);
 CREATE INDEX idx_transactions_created_at ON transactions(created_at);
 CREATE INDEX idx_transactions_reference ON transactions(transaction_reference);
+CREATE INDEX idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX idx_audit_events_entity ON audit_events(entity_type, entity_id);
 CREATE INDEX idx_audit_events_timestamp ON audit_events(timestamp);
 CREATE INDEX idx_fraud_alerts_transaction ON fraud_alerts(transaction_id);
@@ -153,6 +158,9 @@ CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
 CREATE TRIGGER update_accounts_updated_at BEFORE UPDATE ON accounts
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Sample data for testing
 INSERT INTO users (id, username, email, password_hash, first_name, last_name, phone_number) VALUES
 ('b061f043-07b3-4006-be9f-b75e90631b96', 'john.doe', 'john.doe@bank.com', '$2a$10$dummy.hash.for.testing', 'John', 'Doe', '+1234567890'),
@@ -164,4 +172,11 @@ INSERT INTO accounts (id, account_number, user_id, account_type, status, balance
 ('d3hhef99-9c0b-4ef8-bb6d-6bb9bd380a44', 'CHK001000001', 'b061f043-07b3-4006-be9f-b75e90631b96', 'CHECKING', 'ACTIVE', 5000.00, 5000.00),
 ('e4iifg99-9c0b-4ef8-bb6d-6bb9bd380a55', 'SAV001000001', 'b061f043-07b3-4006-be9f-b75e90631b96', 'SAVINGS', 'ACTIVE', 15000.00, 15000.00),
 ('f5jjgh99-9c0b-4ef8-bb6d-6bb9bd380a66', 'CHK001000002', 'b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a22', 'CHECKING', 'ACTIVE', 3000.00, 3000.00),
-('g6kkhi99-9c0b-4ef8-bb6d-6bb9bd380a77', 'SAV001000002', 'b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a22', 'SAVINGS', 'ACTIVE', 8000.00, 8000.00); 
+('g6kkhi99-9c0b-4ef8-bb6d-6bb9bd380a77', 'SAV001000002', 'b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a22', 'SAVINGS', 'ACTIVE', 8000.00, 8000.00);
+
+-- Sample transactions for testing
+INSERT INTO transactions (id, transaction_reference, from_account_id, to_account_id, transaction_type, amount, currency, status, description, user_id, created_at) VALUES
+('11111111-1111-1111-1111-111111111111', 'TXN001000001', NULL, 'd3hhef99-9c0b-4ef8-bb6d-6bb9bd380a44', 'DEPOSIT', 1000.00, 'USD', 'COMPLETED', 'Initial deposit', 'b061f043-07b3-4006-be9f-b75e90631b96', NOW() - INTERVAL '2 days'),
+('22222222-2222-2222-2222-222222222222', 'TXN001000002', 'd3hhef99-9c0b-4ef8-bb6d-6bb9bd380a44', NULL, 'WITHDRAWAL', 200.00, 'USD', 'COMPLETED', 'ATM withdrawal', 'b061f043-07b3-4006-be9f-b75e90631b96', NOW() - INTERVAL '1 day'),
+('33333333-3333-3333-3333-333333333333', 'TXN001000003', 'd3hhef99-9c0b-4ef8-bb6d-6bb9bd380a44', 'e4iifg99-9c0b-4ef8-bb6d-6bb9bd380a55', 'TRANSFER', 500.00, 'USD', 'COMPLETED', 'Transfer to savings', 'b061f043-07b3-4006-be9f-b75e90631b96', NOW() - INTERVAL '1 hour'),
+('44444444-4444-4444-4444-444444444444', 'TXN001000004', NULL, 'f5jjgh99-9c0b-4ef8-bb6d-6bb9bd380a66', 'DEPOSIT', 500.00, 'USD', 'COMPLETED', 'Payroll deposit', 'b1ffcd99-9c0b-4ef8-bb6d-6bb9bd380a22', NOW() - INTERVAL '6 hours'); 

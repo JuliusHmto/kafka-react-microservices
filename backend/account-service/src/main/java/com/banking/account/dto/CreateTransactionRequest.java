@@ -33,6 +33,9 @@ public class CreateTransactionRequest {
 
     private UUID targetAccountId;
 
+    @NotNull(message = "User ID is required")
+    private UUID userId;
+
     @Size(max = 500, message = "Description cannot exceed 500 characters")
     private String description;
 
